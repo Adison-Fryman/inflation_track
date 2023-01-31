@@ -23,14 +23,16 @@ date1 = datetime.date.today()
 date= date1.strftime("%m%d%Y")
 
 for location in locations:
+    print("Location:"+ location)
     request=input(fr"When ready put the network request for {location} here as a string :")
-    # save it as a txt file
+    # save it as a txt file with this format:
     #get location of text file
         # should look like this V = r'''C:\dev\inflation_track\walmart_cart_date.location.price\01232023.19137.txt'''
     # run V through parse_walmart_request
     #check that it looks ok? optional second rev
     # run through add_date_to_item_price_dic(items_prices={}, date=''):
     # run through create_or_append_csv_df(zip_code,date_added={}, date=''):
+    #add location to matrix?
 
 
 print('please check that your data frames look correct, before uploading data to dashboard')

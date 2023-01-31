@@ -1,4 +1,4 @@
-# print(f.read())
+
 # *****temp holding place for parsing the number of items.
 base_string = f.read()
 # print(base_string)

@@ -39,30 +39,54 @@ def parse_walmart_request(file_path):
         num = item.find('"')
         names.append(item[:num])
 
-    # print(names)
-    name_price = dict(zip(names, prices))
-    # print(price_name)
-    from list_of_items import food_list
+    find_stock = []
+    status = '''availabilityStatus":"OUT_OF_STOCK'''
+    for item in by_item2:
+        if status in item:
+            find_stock.append('NO')
+        else:
+            find_stock.append('yes')
 
+    # print(names)
+    name_stock = dict(zip(names, find_stock))
+    name_price = dict(zip(names, prices))
+    print(name_stock)
+    from list_of_items import food_list
     final_data_sorted_named_clean = {}
     for food_item, description in food_list.items():
+        #locates the most important word of the food description:
+        #(incase the description changes over time)
+        food_item_words = food_item.lower().split()
+        food_item_key_word=food_item_words[-1]
+        #checking the item description against the parsed discription:
+        #if description is found, price is placed in dataframe:
         if description in name_price:
             final_data_sorted_named_clean[food_item] = name_price[description]
+        #if description is not found food item key word is used instead.
+        elif food_item_key_word in str(name_price).lower():
+            res =[name for name, price in name_price.items() if food_item_key_word in name.lower()]
+            final_data_sorted_named_clean[food_item] = name_price[res[0]]
+        #if neither of those works user is allerted (in future will ask user to enter price manually)
         else:
             final_data_sorted_named_clean[food_item] = 'item not found'
             print('not found:' + food_item)
+        #print(food_item_last_word)
+        #print()
+
     f.close()
     return final_data_sorted_named_clean
 
 
-v = r'''C:\dev\inflation_track\walmart_cart_date.location.price\01232023.19137.txt'''
-# print(parse_walmart_request(v))
+
 
 
 # write to text file, then check format of text file is correct for SQL
 
-current_date = '01232023'
-current_zip_code = 19137
+current_date = '01302023'
+current_zip_code = 98057
+
+v = fr'''C:\dev\inflation_track\walmart_cart_date.location.price\{current_date}.{current_zip_code}.txt'''
+print(parse_walmart_request(v))
 
 def add_date_to_item_price_dic(items_prices={}, date=''):
     add_date = {'date': date}
@@ -75,19 +99,25 @@ def create_or_append_csv_df(zip_code,date_added={}, date=''):
     data_in_directory = fr'''C:\dev\inflation_track\walmart_cart_date.location.price\grouped\{zip_code}.csv'''
 
     if os.path.exists(data_in_directory):
-        print(f' {zip_code} is already there')
-        #append new data method here
+        print(f' {zip_code} is has been updated')
+        #print( number of items:, items out of stock?)
+
         df.to_csv(data_in_directory, mode='a', index=1, header=False)
         pass
     else:
         df.to_csv(data_in_directory)
 
 
-df_holding = parse_walmart_request(v)
-date_added = add_date_to_item_price_dic(df_holding,current_date)
-print(date_added)
-create_or_append_csv_df(current_zip_code,date_added,current_date)
-# use df_holding to make dataframe headers and first row, then add next row. I do not know if I can create csv files from here or just save to them.
+#df_holding = parse_walmart_request(v)
+#date_added = add_date_to_item_price_dic(df_holding,current_date)
+#print(date_added)
+#*** line below on comment waiting to test adjustment to final_data_sorted_named_clean
+#create_or_append_csv_df(current_zip_code,date_added,current_date)
+
+
+
+
+# use df_holding to make dataframe headers and first row, then add next row.
 
 # still todo - additions
 # variable for "postalCode":"19137", compair with location dictionary
