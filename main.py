@@ -20,7 +20,7 @@ print('''Hello, are you logged in to the walmart site...
         ''')
 
 date1 = datetime.date.today()
-date= date1.strftime("%m%d%Y")
+today_date = date1.strftime("%m%d%Y")
 
 for location in locations:
     print("Location:"+ location)

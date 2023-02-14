@@ -11,7 +11,6 @@ from list_of_items import food_list
 # def parse_by_item:
 def parse_walmart_request(file_path):
     f = open(file_path, "r")
-
     base_string = f.read()
     base = base_string.split('"lineItems":[{"')
     items = str(base[1])
@@ -51,8 +50,9 @@ def parse_walmart_request(file_path):
     name_stock = dict(zip(names, find_stock))
     name_price = dict(zip(names, prices))
     print(name_stock)
-    from list_of_items import food_list
     final_data_sorted_named_clean = {}
+    from list_of_items import food_list
+
     for food_item, description in food_list.items():
         #locates the most important word of the food description:
         #(incase the description changes over time)
@@ -82,8 +82,8 @@ def parse_walmart_request(file_path):
 
 # write to text file, then check format of text file is correct for SQL
 
-current_date = '01302023'
-current_zip_code = 98057
+current_date = '02062023'
+current_zip_code = 58203
 
 v = fr'''C:\dev\inflation_track\walmart_cart_date.location.price\{current_date}.{current_zip_code}.txt'''
 print(parse_walmart_request(v))
@@ -108,11 +108,11 @@ def create_or_append_csv_df(zip_code,date_added={}, date=''):
         df.to_csv(data_in_directory)
 
 
-#df_holding = parse_walmart_request(v)
-#date_added = add_date_to_item_price_dic(df_holding,current_date)
-#print(date_added)
+df_holding = parse_walmart_request(v)
+date_added = add_date_to_item_price_dic(df_holding,current_date)
+print(date_added)
 #*** line below on comment waiting to test adjustment to final_data_sorted_named_clean
-#create_or_append_csv_df(current_zip_code,date_added,current_date)
+create_or_append_csv_df(current_zip_code,date_added,current_date)
 
 
 

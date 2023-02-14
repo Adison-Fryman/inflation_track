@@ -2,7 +2,7 @@
 #need the rest of the list exact specification
 #q? Will the order ever change from walmart cart?
 
-number_of_items=21
+number_of_items=20
 
 # The intent is for it to be necessary caloric items. Traditional junk foods have not been added intentionally.
 food_list = {'Bread':'Great Value 100% Whole Wheat Round Top Bread Loaf, 20 oz',
