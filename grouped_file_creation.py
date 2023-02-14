@@ -7,7 +7,7 @@ from item_price import df_holding
 ### do not ever use this!!!! I have added "_a" so the files with all the data can not be over written. This is for records only.
 def create_txt_files():
     for location in locations:
-        with open(f'C:\dev\inflation_track\walmart_cart_date.location.price\grouped\{location}.txt',
+        with open(f'C:\dev\inflation_track\walmart_cart_date.location.price\grouped\{location}_a.txt',
                   'w') as new_file_name:
             print("item", file=new_file_name)
             for food_item in food_list:
