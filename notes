@@ -1,1 +1,42 @@
+# today's plan todo list
+# 1. get_get_num_items working -DONE
+# 2. check_postal_code working -DONE
+# 3. Automation in main.py
+        # take string
+        # check date
+        # check postcode
+        # write to text file
+        # txt file write to csv/dataframe
 
+#todo list -This WEEK
+# 1.automation
+# 2.how to fork
+# 4.get into SQL
+# 3. discover best format for data analysis with numpy, pandas and jupiter notebooks
+# 5.
+# 6.
+# 7.
+
+#todo list large items
+# 1. Need to fork original on git hub and update to new clean version-waiting for automation to work first
+# 2. Unittest: test for order of items correct, test for num of items correct
+# 3. logging
+# 4. data analysis with numpy, pandas and jupiter notebooks
+# 5. SQL
+# 6. website for visualization
+# 7. Tableau
+
+
+#todo list smaller items
+# 1. Secondary data set with instock/out of stock
+# 2. automate an email update sent with logging, and general data acquisition notes
+# 3. reformat date of files and in files to yyyy-mm-dd to avoid zero in first index (what will SQL want?)
+# 4. add try/expt blocks for areas errors may be thrown: get_num_items
+# 5.
+
+#todo list general ideas for more impact
+# 1.
+# 2. find more data on food to add in, FDA?, USDA?, consumer price index?
+# 3. add gallon of gas in each area?
+# 4.
+# 5.
