@@ -1,8 +1,6 @@
 # Food items
-#need the rest of the list exact specification
-#q? Will the order ever change from walmart cart?
 
-number_of_items=20
+number_of_items = 20
 
 # The intent is for it to be necessary caloric items. Traditional junk foods have not been added intentionally.
 food_list = {'Bread':'Great Value 100% Whole Wheat Round Top Bread Loaf, 20 oz',
@@ -24,15 +22,9 @@ food_list = {'Bread':'Great Value 100% Whole Wheat Round Top Bread Loaf, 20 oz',
              'Black Beans': 'Great Value Black Beans, 15 oz Can',
              'Corn': 'Great Value Whole Kernel Corn, Canned Vegetables, 14.5-15 oz',
              'Peanut Butter (Great Value)': 'Great Value Creamy Peanut Butter, 18 oz Jar',
-             'Can Tomatoes': 'Great Value Diced Tomatoes In Tomato Juice, 14.5 Oz'
+             'Can Tomatoes': 'Great Value Diced Tomatoes In Tomato Juice, 14.5 Oz'}
 
-             }
 
-# Other-? not now, but I would like to include gas,
-# something containing cotton and maybe tylenol or something to look at the affect of us imports and exports on prices.
-# 1 gallon of gas
-# Diapers
-# dog food
-# soap
-# Toothpaste
-# socks
+# Press the green button in the gutter to run the script.
+if __name__ == '__main__':
+    print_hi('PyCharm')
