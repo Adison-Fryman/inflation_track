@@ -1,16 +1,12 @@
 # today's plan todo list
-# 1. get_get_num_items working -DONE
-# 2. check_postal_code working -DONE
-# 3. Automation in main.py
-        # take string
-        # check date
-        # check postcode
-        # write to text file
-        # txt file write to csv/dataframe
+# 1.
+# 2.
+# 3. get started on logging
+# 4. find a way to use from CMD?
 
 #todo list -This WEEK
 # 1.automation
-# 2.how to fork
+# 2.how to branch and merge
 # 4.get into SQL
 # 3. discover best format for data analysis with numpy, pandas and jupiter notebooks
 # 5.
@@ -18,13 +14,14 @@
 # 7.
 
 #todo list large items
-# 1. Need to fork original on git hub and update to new clean version-waiting for automation to work first
 # 2. Unittest: test for order of items correct, test for num of items correct
-# 3. logging
+# 3. logging- once logging is done update and perfect the checking within the automation
 # 4. data analysis with numpy, pandas and jupiter notebooks
 # 5. SQL
 # 6. website for visualization
 # 7. Tableau
+# 8. is there a way to automate the requests in this project.
+# 9. is there a free walmart API that could simplify this.
 
 
 #todo list smaller items
@@ -32,7 +29,8 @@
 # 2. automate an email update sent with logging, and general data acquisition notes
 # 3. reformat date of files and in files to yyyy-mm-dd to avoid zero in first index (what will SQL want?)
 # 4. add try/expt blocks for areas errors may be thrown: get_num_items
-# 5.
+# 5. clean up functions with some comprehensions.
+# 6. not sure if I can put the parse functions in a class or if I prefer it as is.
 
 #todo list general ideas for more impact
 # 1.

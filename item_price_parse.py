@@ -192,7 +192,7 @@ def create_or_append_csv_df(zip_code, date_added: dict, date: str):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     #change these below when testing.
-    current_date = '20230213'
+    current_date = '20230220'
     current_zip_code = 49548
     #good idea to add test to path_temp
     path_temp = fr'''C:\dev\inflation_track\walmart_cart_date.location.price\{current_date}.{current_zip_code}.txt'''
@@ -206,14 +206,14 @@ if __name__ == '__main__':
 
     name_stock = dict(zip(names, stock))
     name_price = dict(zip(names, prices))
-    # print(name_price)
-    # print(name_stock)
-    checking_date = check_date(raw_string)
-    print(checking_date)
+    print(name_price)
+    print(name_stock)
+    #checking_date = check_date(raw_string)
+    #print(checking_date)
     checking_postcode = check_postal_code(current_zip_code,raw_string)
     #print(checking_postcode)
     #print(get_num_items_from_string(raw_string))
-    print(get_num_items_from_stock_dict(name_stock))
-    x = ordered_food_price_dict(name_price)
-    # print(x)
+    #print(get_num_items_from_stock_dict(name_stock))
+    #x = ordered_food_price_dict(name_price)
+    #print(x)
     # create_or_append_csv_df(current_zip_code,add_date_to_item_price_dic(x,current_date))

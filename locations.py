@@ -1,5 +1,5 @@
 #location dictionary for manual requests
-locations = { '49548': "355 54th St SW, Wyoming, MI 49548",
+locations_dict = { '49548': "355 54th St SW, Wyoming, MI 49548",
  '72758': "4208 Pleasant Crossing Blvd, Rogers, AR 72758 --Rogers Supercenter4208",
  '33607': "1505 N Dale Mabry Hwy, Tampa, FL 33607 --Tampa Supercenter",
  '19137': "2200 Wheatsheaf Ln, Philadelphia, PA 19137 --Philadelphia Supercenter no num?",
