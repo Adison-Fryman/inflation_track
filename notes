@@ -1,5 +1,5 @@
 # today's plan todo list
-# 1.make branch for classes set up
+# 1.
 # 2.
 # 3. get started on logging
 # 4. find a way to use from CMD?
@@ -25,12 +25,12 @@
 
 
 #todo list smaller items
-# 1. Secondary data set with instock/out of stock
-# 2. automate an email update sent with logging, and general data acquisition notes
-# 3.
-# 4. add try/expt blocks for areas errors may be thrown: get_num_items. part of logging
-# 5. clean up functions with some comprehensions.
-# 6. not sure if I can put the parse functions in a class or if I prefer it as is.
+# 1. automate an email update sent with logging, and general data acquisition notes
+# 2. clean up functions with some comprehensions.
+# 3.add try/expt blocks for areas errors may be thrown: get_num_items. part of logging
+# 4.
+# 5.
+# 6.
 
 #todo list general ideas for more impact
 # 1.

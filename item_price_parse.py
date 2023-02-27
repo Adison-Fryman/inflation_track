@@ -298,4 +298,4 @@ if __name__ == '__main__':
     # print(yy)
     create_or_append_csv_df_stock(current_zip_code, yy, today_date)
 
-    # create_or_append_csv_df(current_zip_code,add_date_to_item_price_dic(x,current_date))
+    create_or_append_csv_df(current_zip_code,xx,today_date))

@@ -70,16 +70,24 @@ if __name__ == '__main__':
 
         name_stock = dict(zip(names, stock))
         name_price = dict(zip(names, prices))
-        print(parse.get_num_items_from_string(raw_string))
-        print(parse.get_num_items_from_stock_dict(name_stock))
-        #check post code
-        print(f'location in file: {parse.check_postal_code(location, raw_string)} location intended:{location}')
-        #check date-whole date- only returns date string, need to ask user if date string is ok
+        checking_postcode = parse.check_postal_code(parse.current_zip_code, raw_string)
+        print(parse.postal_code_match(checking_postcode, location))
+
         print(parse.check_date(raw_string))
+
+        # print(get_num_items_from_string(raw_string))
+        print(parse.get_num_items_from_stock_dict(name_stock))
+
         x = parse.ordered_food_price_dict(name_price)
-        y = parse.add_date_to_dic(x,today_date)
-        #i dont think I need to name this z
-        z = parse.create_or_append_csv_df(location,y,today_date)
-        print(x)
+        xx = parse.add_date_to_dic(x, today_date)
+        # print(xx)
+        parse.create_or_append_csv_df(current_zip_code, xx, today_date)
+
+        y = parse.ordered_name_stock_dict(name_stock)
+        yy = parse.add_date_to_dic(y, today_date)
+        # print(yy)
+        create_or_append_csv_df_stock(current_zip_code, yy, today_date)
+
+        create_or_append_csv_df(current_zip_code, xx, today_date))
 
     print('please check that your data frames look correct, before uploading data to dashboard')
