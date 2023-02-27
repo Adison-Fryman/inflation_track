@@ -1,17 +1,17 @@
 # today's plan todo list
-# 1.
+# 1.make branch for classes set up
 # 2.
 # 3. get started on logging
 # 4. find a way to use from CMD?
 
 #todo list -This WEEK
-# 1.automation
-# 2.how to branch and merge
-# 4.get into SQL
-# 3. discover best format for data analysis with numpy, pandas and jupiter notebooks
-# 5.
-# 6.
-# 7.
+# 1.Branch- classes
+# 2.pandas tutorial
+# 4.
+# 3. automation
+# 5.how to branch and merge
+# 6.get into SQL
+# 7.discover best format for data analysis with numpy, pandas and jupiter notebooks
 
 #todo list large items
 # 2. Unittest: test for order of items correct, test for num of items correct
@@ -27,8 +27,8 @@
 #todo list smaller items
 # 1. Secondary data set with instock/out of stock
 # 2. automate an email update sent with logging, and general data acquisition notes
-# 3. reformat date of files and in files to yyyy-mm-dd to avoid zero in first index (what will SQL want?)
-# 4. add try/expt blocks for areas errors may be thrown: get_num_items
+# 3.
+# 4. add try/expt blocks for areas errors may be thrown: get_num_items. part of logging
 # 5. clean up functions with some comprehensions.
 # 6. not sure if I can put the parse functions in a class or if I prefer it as is.
 
@@ -36,5 +36,5 @@
 # 1.
 # 2. find more data on food to add in, FDA?, USDA?, consumer price index?
 # 3. add gallon of gas in each area?
-# 4.
+# 4. does bulk buying save money over time when items are on sale?
 # 5.
