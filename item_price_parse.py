@@ -1,13 +1,13 @@
+# obtain string and parse request into usable chunks for reuse in other functions
 import os.path
 import pandas as pd
 import datetime
 from datetime import timedelta
 # from typing import Dict
-
 from list_of_items import food_list
 
 
-# obtain string and parse request into usable chunks for reuse in other functions
+
 def continue_yes_no():
     # answer = input('would you like to continue Y/N:')
     # if answer.upper() == 'Y':
@@ -16,7 +16,7 @@ def continue_yes_no():
     # option to re-enter string (humm?)
     pass
 
-
+#opens txt file, turns it into a string and returns it while closing the txt file.
 def parse_walmart_request(file_path):
     f = open(file_path, "r")
     base_string = f.read()
@@ -32,7 +32,7 @@ def raw_items_strings(base):
     # remove starting text
     return split_up[1:]
 
-
+# takes in a list of strings, removes extra characters so that only the prices are remaining.
 def get_items_prices(raw_items: list):
     if raw_items is None:
         raw_items = []
@@ -48,7 +48,7 @@ def get_items_prices(raw_items: list):
 
     return prices
 
-
+ # takes in a list of strings, removes extra characters so that only the names of items are remaining.
 def get_item_names(raw_items: list):
     find_names = []
     names = []
@@ -63,7 +63,7 @@ def get_item_names(raw_items: list):
 
     return names
 
-
+#checking that the data is not an old string/cart that has not been refreshed. Currently, returns a string for manual user verification.
 def check_date(raw_string):
     # delivery date, check that it is near today's date for file writing.
     # Don't let file be writen if dates are too far apart.
@@ -95,7 +95,7 @@ def check_date(raw_string):
     date_string += "\n"
     return date_string
 
-
+#checks that the string provided is for the corresponding/correct location.
 def check_postal_code(postal_code: int, raw_string: str):
     # get postal code from file and check against expected post code from locations_dict. DO NOT ALLOW INCORRECT ANSWERS
     string = raw_string
@@ -162,7 +162,7 @@ def get_num_items_from_stock_dict(stock_dict: dict):
     errors = other
     return f'Total:{total}   Number of In Stock Items: {yeses}  Number Out of Stock: {nos}  Errors: {errors}'
 
-
+#put the names and prices
 def ordered_food_price_dict(name_price: dict):
     final_data_sorted_named_clean = {}
     invalid_descriptions = 0
@@ -259,7 +259,7 @@ if __name__ == '__main__':
     date1 = datetime.date.today()
     today_date = date1.strftime("%Y%m%d")
 
-
+    # entry point of request string, creates the text file, then closes it. This is the "test" version to prevent over writing data in DF's.
     def create_txt_files_test(location, date):
         # update this so that it does not overwrite files that already exist.?
         request_string = input(fr"When ready put the network request for {location} here as a string :")
@@ -267,35 +267,38 @@ if __name__ == '__main__':
                   'w') as new_file_name:
             print(request_string, file=new_file_name)
 
-
+    # Take request string, create txt file, close. Create variables raw_string and raw_items from txt file.
     create_txt_files_test(current_zip_code, today_date)
     path_temp = fr'''C:\dev\inflation_track\walmart_cart_date.location.price\{today_date}.{current_zip_code}_test.txt'''
     raw_string = parse_walmart_request(path_temp)
     raw_items = (raw_items_strings(parse_walmart_request(path_temp)))
 
+    # check raw string for date, and zip code before creating dictionaries
+    checking_postcode = check_postal_code(current_zip_code, raw_string)
+    print(postal_code_match(checking_postcode, current_zip_code))
+    print(check_date(raw_string))
+
+    # create clean list variables from raw_items
     names = get_item_names(raw_items)
     prices = get_items_prices(raw_items)
     stock = get_stock_availability(raw_items)
 
+    # create dictionary variables from the above list variables of names:prices and names:stock
     name_stock = dict(zip(names, stock))
     name_price = dict(zip(names, prices))
 
-    checking_postcode = check_postal_code(current_zip_code, raw_string)
-    print(postal_code_match(checking_postcode, current_zip_code))
-
-    print(check_date(raw_string))
-
-    # print(get_num_items_from_string(raw_string))
+    #gets total number of items in stock, or with errors for logging/reporting
     print(get_num_items_from_stock_dict(name_stock))
 
-    x = ordered_food_price_dict(name_price)
-    xx = add_date_to_dic(x, today_date)
-    # print(xx)
-    create_or_append_csv_df(current_zip_code, xx, today_date)
+    #Puts the price dict in the correct order for the DF, adds the date and then appends it to the DF in CSV format.
+    in_order_prices = ordered_food_price_dict(name_price)
+    ordered_and_dated_prices = add_date_to_dic(in_order_prices, today_date)
+    print(ordered_and_dated_prices)
+    create_or_append_csv_df(current_zip_code, ordered_and_dated_prices, today_date)
 
-    y = ordered_name_stock_dict(name_stock)
-    yy = add_date_to_dic(y, today_date)
-    # print(yy)
-    create_or_append_csv_df_stock(current_zip_code, yy, today_date)
+    in_order_stock = ordered_name_stock_dict(name_stock)
+    ordered_and_dated_stock = add_date_to_dic(in_order_stock, today_date)
+    # print(ordered_and_dated_stock)
+    create_or_append_csv_df_stock(current_zip_code, ordered_and_dated_stock, today_date)
 
-    create_or_append_csv_df(current_zip_code,xx,today_date))
+    #create_or_append_csv_df(current_zip_code,xx,today_date))
