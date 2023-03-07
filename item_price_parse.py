@@ -1,3 +1,5 @@
+#I have updated the code, do you know why import looging_config is grayed out and pycharm says its not being used?
+
 # obtain string and parse request into usable chunks for reuse in other functions
 import os.path
 import pandas as pd
@@ -5,259 +7,298 @@ import datetime
 from datetime import timedelta
 # from typing import Dict
 from list_of_items import food_list
+import logging
+import logging_config
+#logging = logging.getLogger(__name__)
+
+
+date1 = datetime.date.today()
+today_date = date1.strftime("%Y%m%d")
 
 
 
-def continue_yes_no():
-    # answer = input('would you like to continue Y/N:')
-    # if answer.upper() == 'Y':
-    # option to break out of loop and exit program. (break)
-    # option to skip current location and move on to next.(continue)
-    # option to re-enter string (humm?)
-    pass
 
-#opens txt file, turns it into a string and returns it while closing the txt file.
-def parse_walmart_request(file_path):
-    f = open(file_path, "r")
-    base_string = f.read()
-    f.close()
-    return base_string
+class Parse_and_save:
+    def __init__(self, string: str, location: str):
+        self.file_path = fr'''C:\dev\inflation_track\walmart_cart_date.location.price\{today_date}.{location}_test.txt'''
+        self.location = location
+        self.base_string = ''
+        self.raw_items = ''
+        self.postalcode_string = ''
+        self.prices = []
+        self.names = []
+        self.stock_availability = []
+        self.name_stock = {}
+        self.name_price = {}
 
+    def parse_walmart_request(self):
+        f = open(self.file_path, "r")
+        base_string = f.read()
+        f.close()
+        logging.info('base string made')
+        self.base_string = base_string
 
-# this function is the base split of the data, it creates a list of strings that is later used in several other functions. shadow name: raw_items
-def raw_items_strings(base):
-    base_list = base.split('"lineItems":[{"')
-    items = str(base_list[1])
-    split_up = items.split('"itemPrice":{"')
-    # remove starting text
-    return split_up[1:]
-
-# takes in a list of strings, removes extra characters so that only the prices are remaining.
-def get_items_prices(raw_items: list):
-    if raw_items is None:
-        raw_items = []
-    find_prices = []
-    prices = []
-    for item in raw_items:
-        index = item.find('"$')
-        find_prices.append(item[index + 1:index + 15])
-
-    for item in find_prices:
-        index = item.find('"')
-        prices.append(item[:index - 2])
-
-    return prices
-
- # takes in a list of strings, removes extra characters so that only the names of items are remaining.
-def get_item_names(raw_items: list):
-    find_names = []
-    names = []
-    for item in raw_items:
-        index = item.find('"name"')
-        find_names.append(item[index + 8:index + 100])
-
-    for item in find_names:
-        # item_no_comma = item.replace(",","")
-        index = item.find('"')
-        names.append(item[:index])
-
-    return names
-
-#checking that the data is not an old string/cart that has not been refreshed. Currently, returns a string for manual user verification.
-def check_date(raw_string):
-    # delivery date, check that it is near today's date for file writing.
-    # Don't let file be writen if dates are too far apart.
-    string = raw_string
-    date1 = datetime.date.today()
-    tomorrow = date1 + timedelta(1)
-    today_date = date1.strftime("%Y-%m-%d")
-    thisMonth_date = date1.strftime("%Y-%m")
-    tomorrow_date = tomorrow.strftime("%Y-%m-%d")
-    date_string = ''
-    if string.find(today_date) != -1:
-        print("Today's date found in string below:")
-        index = string.find(str(today_date))
-        date_string += string[index - 30:index + 200]
-    elif string.find(str(tomorrow_date)) != -1:
-        print("Tomorrow's date found in string below:")
-        index = string.find(str(thisMonth_date))
-        date_string += string[index - 30:index + 200]
-    elif string.find(str(thisMonth_date)) != -1:
-        print("Today's date not found.")
-        print("Tomorrow's date not found.")
-        print(' Only date found was:')
-        index = string.find(str(thisMonth_date))
-        date_string += string[index - 30:index + 200]
-        # put a way to exit/ask if this date is ok
-    else:
-        print('No date found')
-        ###log entered here (DATE ERROR{location})
-    date_string += "\n"
-    return date_string
-
-#checks that the string provided is for the corresponding/correct location.
-def check_postal_code(postal_code: int, raw_string: str):
-    # get postal code from file and check against expected post code from locations_dict. DO NOT ALLOW INCORRECT ANSWERS
-    string = raw_string
-    postcode_string = ''
-    if string.find(str(postal_code)) == -1:
-        postcode_string = False
-    elif string.find(str(postal_code)) != -1:
-        index = string.find(str(postal_code))
-        postcode_string += string[index:index + 5]
-
-    return postcode_string
+    # this function is the base split of the data, it creates a list of strings that is later used in several other functions.
+    def raw_items_strings(self):
+        base_list = self.base_string.split('"lineItems":[{"')
+        items = str(base_list[1])
+        split_up = items.split('"itemPrice":{"')
+        raw_items = split_up[1:]
+        logging.debug('raw items made')
+        self.raw_items = raw_items
 
 
-def postal_code_match(postalcode_string: str, location):
-    if int(postalcode_string) == int(location):
-        return f'{postalcode_string} matches {location}, continuing with program...'
-    else:
-        return f'{postalcode_string} does not match {location}!'
-        ####log entered here (Location ERROR f'{postalcode_string} does not match {location}!')
-        # continue_yes_no()
+    # takes in a list of strings, removes extra characters so that only the prices are remaining.
+    def get_items_prices(self):
+        find_prices = []
+        prices = []
+        for item in self.raw_items:
+            index = item.find('"$')
+            find_prices.append(item[index + 1:index + 15])
 
+        for item in find_prices:
+            index = item.find('"')
+            prices.append(item[:index - 2])
+        logging.debug('self.prices made')
+        self.prices = prices
 
-def get_stock_availability(raw_items: list):
-    find_stock = []
-    status = '''availabilityStatus":"OUT_OF_STOCK'''
-    for item in raw_items:
-        if status in item:
-            find_stock.append('NO')
+    # takes in a list of strings, removes extra characters so that only the names of items are remaining.
+    def get_item_names(self):
+        find_names = []
+        names = []
+        for item in self.raw_items:
+            index = item.find('"name"')
+            find_names.append(item[index + 8:index + 100])
+
+        for item in find_names:
+            # item_no_comma = item.replace(",","")
+            index = item.find('"')
+            names.append(item[:index])
+        logging.debug('names found')
+        self.names = names
+        # checking that the data is not an old string/cart that has not been refreshed. Currently, returns a string for manual user verification.
+
+    def check_date(self):
+        # delivery date, check that it is near today's date for file writing.
+        # Don't let file be writen if dates are too far apart.
+        string = self.base_string
+        date1 = datetime.date.today()
+        tomorrow = date1 + timedelta(1)
+        today_date = date1.strftime("%Y-%m-%d")
+        thisMonth_date = date1.strftime("%Y-%m")
+        tomorrow_date = tomorrow.strftime("%Y-%m-%d")
+        date_string = ''
+        if string.find(today_date) != -1:
+            print("Today's date found in string below:")
+            index = string.find(str(today_date))
+            date_string += string[index - 30:index + 200]
+        elif string.find(str(tomorrow_date)) != -1:
+            print("Tomorrow's date found in string below:")
+            index = string.find(str(thisMonth_date))
+            date_string += string[index - 30:index + 200]
+        elif string.find(str(thisMonth_date)) != -1:
+            print("Today's date not found.")
+            print("Tomorrow's date not found.")
+            print(' Only date found was:')
+            index = string.find(str(thisMonth_date))
+            date_string += string[index - 30:index + 200]
+            # put a way to exit/ask if this date is ok
         else:
-            find_stock.append('YES')
+            print('No date found')
+            logging.info(f'(DATE ERROR)')
+            date_string += "\n"
 
-    return find_stock
+        return date_string
 
+    # checks that the string provided is for the corresponding/correct location.
+    def check_postal_code(self):
+        # get postal code from file and check against expected post code from locations_dict. DO NOT ALLOW INCORRECT ANSWERS
+        string = self.base_string
+        postcode_string = ''
+        if string.find(str(self.location)) == -1:
+            self.postalcode_string = False
+            logging.debug({postcode_string})
+        elif string.find(str(self.location)) != -1:
+            index = string.find(str(self.location))
+            self.postalcode_string += string[index:index + 5]
 
-# *********this only works in a few situations, it is out of use for now.
-def get_num_items_from_string(raw_string):
-    # check that the list is the right length and so is the quantity.
-    # string    {"subTotal":{"label":"Subtotal (17 items)"," or totalItemQuantity":17
-    # string    ":[{"code":"OUT_OF_STOCK","shouldDisableCheckout":false,"itemIds":["8421ff2b-e38b-4a8e-b2a9-c07e5042495d","57d2a76f-ab3a-4e9b-98cb-01969da02722","dd8211c3-10e5-44bd-a5dc-16a60f15c7ba"],
-    items_string_index = (raw_string.find('totalItemQuantity'))
-    items_string = raw_string[(items_string_index + 19):(items_string_index + 21)]
-    out_of_stock_id_index = raw_string.find('{"code":"OUT_OF_STOCK"')
-    out_of_stock_string = raw_string[(out_of_stock_id_index + 19):]
-    index1_itemIds = int(out_of_stock_string.find('['))
-    index2_itemIds = int(out_of_stock_string.find(']'))
-    num_itemIds = len((out_of_stock_string[index1_itemIds + 1: index2_itemIds]).split(","))
-    return int(items_string) + num_itemIds
+        #return postcode_string
 
-
-def get_num_items_from_stock_dict(stock_dict: dict):
-    yeses = 0
-    nos = 0
-    other = 0
-    for status in stock_dict.values():
-        if status == 'YES':
-            yeses += 1
-        elif status == "NO":
-            nos += 1
+    def postal_code_match(self):
+        if int(self.postalcode_string) == int(self.location):
+            return f'{self.postalcode_string} matches {self.location}, continuing with program...'
+            logging.info(f' {self.postalcode_string} matches {self.location}!')
         else:
-            other += 1
-            ###enter log here (Item number error location,f'Total:{total}   Number of In Stock Items: {yeses}  Number Out of Stock: {nos}  Errors: {errors} )
+            return f'{self.postalcode_string} does not match {self.location}!'
+            logging.warning(f'(Location ERROR {self.postalcode_string} does not match {self.location}!')
+            # continue_yes_no()
 
-    total = yeses + nos
-    errors = other
-    return f'Total:{total}   Number of In Stock Items: {yeses}  Number Out of Stock: {nos}  Errors: {errors}'
 
-#put the names and prices
-def ordered_food_price_dict(name_price: dict):
-    final_data_sorted_named_clean = {}
-    invalid_descriptions = 0
-    for food_item, description in food_list.items():
-        # locates the most important word of the food description:
-        # (incase the description changes over time)
-        food_item_words = food_item.lower().split()
-        food_item_key_word = food_item_words[-1]
-        # checking the item description in food_item against the parsed description:
-        # if description is found, price is placed in dict with name:
-        if description in name_price:
-            final_data_sorted_named_clean[food_item] = name_price[description]
-        # if description is not found, food item key word is used instead.
-        elif food_item_key_word in str(name_price).lower():
-            res = [name for name, price in name_price.items() if food_item_key_word in name.lower()]
-            final_data_sorted_named_clean[food_item] = name_price[res[0]]
-            ###enter log here (description for {food_item} in list of items is not valid today)
-            invalid_descriptions += 1
-        # if neither of those works user is alerted (in future will ask user to enter price manually)
+    def get_stock_availability(self):
+        find_stock = []
+        status = '''availabilityStatus":"OUT_OF_STOCK'''
+        for item in self.raw_items:
+            if status in item:
+                find_stock.append('NO')
+            else:
+                find_stock.append('YES')
+        self.stock_availability = find_stock
+
+
+    def get_num_items_from_stock_dict(self):
+        yeses = 0
+        nos = 0
+        other = 0
+        for status in self.name_stock.values():
+            if status == 'YES':
+                yeses += 1
+            elif status == "NO":
+                nos += 1
+            else:
+                other += 1
+                logging.info(
+                f'Item number error (location),Total:{total}   Number of In Stock Items: {yeses}  Number Out of Stock: {nos}  Errors: {errors} ')
+
+        total = yeses + nos
+        errors = other
+        logging.info(f'Total:{total}   Number of In Stock Items: {yeses}  Number Out of Stock: {nos}  Errors: {errors}')
+        return f'Total:{total}   Number of In Stock Items: {yeses}  Number Out of Stock: {nos}  Errors: {errors}'
+
+
+    # put the names and prices
+    def ordered_food_price_dict(self):
+        final_data_sorted_named_clean = {}
+        invalid_descriptions = 0
+        for food_item, description in food_list.items():
+            # locates the most important word of the food description:
+            # (incase the description changes over time)
+            food_item_words = food_item.lower().split()
+            food_item_key_word = food_item_words[-1]
+            # checking the item description in food_item against the parsed description:
+            # if description is found, price is placed in dict with name:
+            if description in self.name_price:
+                final_data_sorted_named_clean[food_item] = self.name_price[description]
+            # if description is not found, food item key word is used instead.
+            elif food_item_key_word in str(self.name_price).lower():
+                res = [name for name, price in self.name_price.items() if food_item_key_word in name.lower()]
+                final_data_sorted_named_clean[food_item] = self.name_price[res[0]]
+                ###enter log here (description for {food_item} in list of items is not valid today)
+                invalid_descriptions += 1
+            # if neither of those works user is alerted (in future will ask user to enter price manually)
+            else:
+                final_data_sorted_named_clean[food_item] = 'item not found'
+                print('not found:' + food_item)
+                ###enter log here ('not found:' + {food_item})
+                invalid_descriptions += 1
+
+        ####enter log here(f' the number of invalid descriptions in list_of_items is: {invalid_descriptions}
+        return final_data_sorted_named_clean
+
+
+    def ordered_name_stock_dict(self):
+        final_data_sorted_named_clean = {}
+        for food_item, description in food_list.items():
+            # locates the most important word of the food description:
+            # (incase the description changes over time)
+            food_item_words = food_item.lower().split()
+            food_item_key_word = food_item_words[-1]
+            # checking the item description in food_item against the parsed description:
+            # if description is found, price is placed in dict with name:
+            if description in self.name_stock:
+                final_data_sorted_named_clean[food_item] = self.name_stock[description]
+            # if description is not found, food item key word is used instead.
+            elif food_item_key_word in str(self.name_stock).lower():
+                res = [name for name, status in self.name_stock.items() if food_item_key_word in name.lower()]
+                final_data_sorted_named_clean[food_item] = self.name_stock[res[0]]
+                ###enter log here (description for {food_item} in list of items is not valid today)
+                # if neither of those works user is alerted (in future will ask user to enter price manually?)
+            else:
+                final_data_sorted_named_clean[food_item] = 'item not found'
+                print('not found:' + food_item)
+                ###enter log here ('not found:' + {food_item})
+        return final_data_sorted_named_clean
+
+
+    def add_date_to_dic(self,a_dict: dict):
+        add_date: dict[str, str] = {'date': today_date}
+        add_date.update(a_dict)
+        return add_date
+
+
+    def create_or_append_csv_df(self, date_added: dict):
+        df = pd.DataFrame(date_added, index=[0])
+        data_in_directory = fr'''C:\dev\inflation_track\walmart_cart_date.location.price\grouped\{self.location}.csv'''
+        if os.path.exists(data_in_directory):
+            print(f" {self.location} prices have been updated, with prices from today's date: {today_date}")
+            print(f'File saved to: {data_in_directory}')
+            logging.info(f"{self.location} prices have been updated, with prices from today's date: {today_date}, File saved to: {data_in_directory}")
+            df.to_csv(data_in_directory, mode='a', index=1, header=False)
+            pass
         else:
-            final_data_sorted_named_clean[food_item] = 'item not found'
-            print('not found:' + food_item)
-            ###enter log here ('not found:' + {food_item})
-            invalid_descriptions += 1
-
-    ####enter log here(f' the number of invalid descriptions in list_of_items is: {invalid_descriptions}
-    return final_data_sorted_named_clean
+            df.to_csv(data_in_directory)
+            logging.warning(f'new dataframe created with location:{data_in_directory}')
 
 
-def ordered_name_stock_dict(name_stock: dict):
-    final_data_sorted_named_clean = {}
-    for food_item, description in food_list.items():
-        # locates the most important word of the food description:
-        # (incase the description changes over time)
-        food_item_words = food_item.lower().split()
-        food_item_key_word = food_item_words[-1]
-        # checking the item description in food_item against the parsed description:
-        # if description is found, price is placed in dict with name:
-        if description in name_stock:
-            final_data_sorted_named_clean[food_item] = name_stock[description]
-        # if description is not found, food item key word is used instead.
-        elif food_item_key_word in str(name_stock).lower():
-            res = [name for name, status in name_stock.items() if food_item_key_word in name.lower()]
-            final_data_sorted_named_clean[food_item] = name_stock[res[0]]
-            ###enter log here (description for {food_item} in list of items is not valid today)
-        # if neither of those works user is alerted (in future will ask user to enter price manually?)
+    def create_or_append_csv_df_stock(self, date_added: dict):
+        df = pd.DataFrame(date_added, index=[0])
+        data_in_directory = fr'''C:\dev\inflation_track\walmart_cart_date.location.stock\grouped\{location}.csv'''
+
+        if os.path.exists(data_in_directory):
+            print(f" {location} stock has been updated, with stock status from today's date: {today_date}")
+            print(f'File saved to: {data_in_directory}')
+            df.to_csv(data_in_directory, mode='a', index=1, header=False)
+            logging.info(f"{self.location} stock availabilities have been updated, from today's date: {today_date}, File saved to: {data_in_directory}")
+            pass
         else:
-            final_data_sorted_named_clean[food_item] = 'item not found'
-            print('not found:' + food_item)
-            ###enter log here ('not found:' + {food_item})
-    return final_data_sorted_named_clean
+            df.to_csv(data_in_directory)
+            logging.warning(f'new dataframe created with location:{data_in_directory}')
+
+    def run_parse_machine(self):
+        # entry point of request string, creates the text file, then closes it. This is the "test" version to prevent over writing data in DF's.
+        # Take request string, create txt file, close. Create variables raw_string and raw_items from txt file.
+        #create_txt_files(location, today_date)
+
+        raw_string = self.parse_walmart_request()
+        raw_items = (self.raw_items_strings())
+
+        # check raw string for date, and zip code before creating dictionaries
+        checking_postcode = self.check_postal_code()
+        print(self.postal_code_match())
+        print(self.check_date())
+
+        # create clean list variables from raw_items
+        self.get_item_names()
+        self.get_items_prices()
+        self.get_stock_availability()
 
 
-def add_date_to_dic(items_prices: dict, date: str):
-    add_date: dict[str, str] = {'date': date}
-    add_date.update(items_prices)
-    return add_date
+        # create dictionary variables from the above list variables of names:prices and names:stock
+        self.name_stock = dict(zip(self.names, self.stock_availability))
+        self.name_price = dict(zip(self.names, self.prices))
+        self.get_stock_availability()
 
+        # gets total number of items in stock, or with errors for logging/reporting
+        print(self.get_num_items_from_stock_dict())
 
-def create_or_append_csv_df(zip_code, date_added: dict, date: str):
-    df = pd.DataFrame(date_added, index=[0])
-    data_in_directory = fr'''C:\dev\inflation_track\walmart_cart_date.location.price\grouped\{zip_code}.csv'''
+        # Puts the price dict in the correct order for the DF, adds the date and then appends it to the DF in CSV format.
+        in_order_prices = self.ordered_food_price_dict()
+        ordered_and_dated_prices = self.add_date_to_dic(in_order_prices)
+        print(ordered_and_dated_prices)
+        self.create_or_append_csv_df( ordered_and_dated_prices)
 
-    if os.path.exists(data_in_directory):
-        print(f" {zip_code} prices have been updated, with prices from today's date: {date}")
-        print(f'File saved to: {data_in_directory}')
-        ####ENTER LOG HERE
-        df.to_csv(data_in_directory, mode='a', index=1, header=False)
-        pass
-    else:
-        df.to_csv(data_in_directory)
-        ####ENTER LOG HERE
+        in_order_stock = self.ordered_name_stock_dict()
+        ordered_and_dated_stock = self.add_date_to_dic(in_order_stock)
+        print(ordered_and_dated_stock)
+        self.create_or_append_csv_df_stock(ordered_and_dated_stock)
 
-
-def create_or_append_csv_df_stock(zip_code, date_added: dict, date: str):
-    df = pd.DataFrame(date_added, index=[0])
-    data_in_directory = fr'''C:\dev\inflation_track\walmart_cart_date.location.stock\grouped\{zip_code}.csv'''
-
-    if os.path.exists(data_in_directory):
-        print(f" {zip_code} stock has been updated, with stock status from today's date: {date}")
-        print(f'File saved to: {data_in_directory}')
-        df.to_csv(data_in_directory, mode='a', index=1, header=False)
-        ####ENTER LOG HERE
-        pass
-    else:
-        df.to_csv(data_in_directory)
-        ####ENTER LOG HERE
-
-
-# Press the green button in the gutter to run the script.
+    # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    current_zip_code = 49548
 
+
+    location = 49548
     date1 = datetime.date.today()
     today_date = date1.strftime("%Y%m%d")
+
 
     # entry point of request string, creates the text file, then closes it. This is the "test" version to prevent over writing data in DF's.
     def create_txt_files_test(location, date):
@@ -267,38 +308,11 @@ if __name__ == '__main__':
                   'w') as new_file_name:
             print(request_string, file=new_file_name)
 
-    # Take request string, create txt file, close. Create variables raw_string and raw_items from txt file.
-    create_txt_files_test(current_zip_code, today_date)
-    path_temp = fr'''C:\dev\inflation_track\walmart_cart_date.location.price\{today_date}.{current_zip_code}_test.txt'''
-    raw_string = parse_walmart_request(path_temp)
-    raw_items = (raw_items_strings(parse_walmart_request(path_temp)))
 
-    # check raw string for date, and zip code before creating dictionaries
-    checking_postcode = check_postal_code(current_zip_code, raw_string)
-    print(postal_code_match(checking_postcode, current_zip_code))
-    print(check_date(raw_string))
+    #1 Take request string, create txt file, close. Create variables raw_string and raw_items from txt file.
+    #create_txt_files_test(current_zip_code, today_date)
+    request_string = ''''{"data":{"cart":{"id":"331dfd44-b089-4c42-807b-b98da65f8fe8","checkoutable":false,"basketSwitch":{"collapsed":true,"switchOptions":[{"fulfillmentOption":"SHIPPING","itemIds":["57d2a76f-ab3a-4e9b-98cb-01969da02722"],"switchableQuantity":1,"selected":false},{"fulfillmentOption":"PICKUP","itemIds":["682a78df-2bd3-4d69-8b97-eb97607e5efb","1a4971c1-9e6e-4d28-b2c1-6ba129f9ee7a","2145c06f-9520-47c8-899c-7597041ec886","8421ff2b-e38b-4a8e-b2a9-c07e5042495d","75fc7100-18e1-4d8d-aa73-94051be76c82","74bc90ec-ebbf-44a7-b7f9-8fbee0f63725","616a1b50-dea3-457c-b50a-ddc789c429e1","c415a3e7-5d55-4777-921a-43846569b343","8cd4a6e1-1237-4d89-bcc7-89aab5f6ddec","fc955bea-32a3-4bcf-981b-1f9f7b5fdcf7","fea78559-91e3-4f5c-82c9-1ded3829f5e9","57d2a76f-ab3a-4e9b-98cb-01969da02722","4c115420-8be3-4bd7-983a-99b7a312d772","ed2cbb35-cdbd-42ef-ac32-f396086a235e","a5db9b02-6ef2-4c28-bff3-54748f829303","3dba88c2-bd63-4352-8cbf-f3db65928f88","938a7c2e-5454-4e01-b067-59b238d9f399","5c3866f6-94dc-4066-871d-99890c139aa9","dd8211c3-10e5-44bd-a5dc-16a60f15c7ba","d870467c-0310-447f-98b7-8fbf549973d7"],"switchableQuantity":20,"selected":true},{"fulfillmentOption":"DELIVERY","itemIds":["682a78df-2bd3-4d69-8b97-eb97607e5efb","1a4971c1-9e6e-4d28-b2c1-6ba129f9ee7a","2145c06f-9520-47c8-899c-7597041ec886","8421ff2b-e38b-4a8e-b2a9-c07e5042495d","75fc7100-18e1-4d8d-aa73-94051be76c82","74bc90ec-ebbf-44a7-b7f9-8fbee0f63725","616a1b50-dea3-457c-b50a-ddc789c429e1","c415a3e7-5d55-4777-921a-43846569b343","8cd4a6e1-1237-4d89-bcc7-89aab5f6ddec","fc955bea-32a3-4bcf-981b-1f9f7b5fdcf7","fea78559-91e3-4f5c-82c9-1ded3829f5e9","57d2a76f-ab3a-4e9b-98cb-01969da02722","4c115420-8be3-4bd7-983a-99b7a312d772","ed2cbb35-cdbd-42ef-ac32-f396086a235e","a5db9b02-6ef2-4c28-bff3-54748f829303","3dba88c2-bd63-4352-8cbf-f3db65928f88","938a7c2e-5454-4e01-b067-59b238d9f399","5c3866f6-94dc-4066-871d-99890c139aa9","dd8211c3-10e5-44bd-a5dc-16a60f15c7ba","d870467c-0310-447f-98b7-8fbf549973d7"],"switchableQuantity":20,"selected":false}]},"customer":{"id":"e573eed8-3964-44ea-928d-75c40ec9b0cc","isGuest":false},"cartGiftingDetails":{"isGiftOrder":false,"hasGiftEligibleItem":false,"isAddOnServiceAdjustmentNeeded":false,"isWalmartProtectionPlanPresent":false,"isAppleCarePresent":false},"addressMode":null,"lineItems":[{"id":"682a78df-2bd3-4d69-8b97-eb97607e5efb","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-02-20T15:29:50Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$11.82 ea","value":11.82},"wasPrice":null,"unitPrice":{"displayValue":"$3.94/lb","value":3.94},"linePrice":{"displayValue":"$11.82","value":11.82},"savedPrice":null,"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"2851S06OFJIU","name":"Great Value Beef Burgers, 75% Lean/25% Fat, 12 Count, 3 lbs (Frozen)","usItemId":"10315759","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/0f842e16-34ba-48ba-8fdd-869306a01018_3.9ec23e23b93a3b6606447058a5841f63.jpeg"},"addOnServices":null,"itemType":null,"offerId":"D1586D37517D4C528EBB53AE2BDC93E1","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":10,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:46000:46001:46105:46238","availabilityStatus":"IN_STOCK","brand":"Great Value","category":{"categoryPath":"Home Page/Food/Frozen Foods/Frozen Meat, Seafood, & Vegetarian/Frozen Meat"},"departmentName":"MEAT & SEAFOOD","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":null,"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"1a4971c1-9e6e-4d28-b2c1-6ba129f9ee7a","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T18:08:53Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$1.74 ea","value":1.74},"wasPrice":null,"unitPrice":{"displayValue":"$1.74/ea","value":1.74},"linePrice":{"displayValue":"$1.74","value":1.74},"savedPrice":null,"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"2SH4Z3HX6R1G","name":"Celery Stalk","usItemId":"51259411","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/b9f848d3-13f1-43d3-99db-33e17abb9c1c_1.987f0112fa028282b940a6502fc0db18.jpeg"},"addOnServices":null,"itemType":null,"offerId":"C75E518BFAB0469EBA0C86005095BC25","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":12,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:46000:46001:46104:46233","availabilityStatus":"IN_STOCK","brand":"Fresh Produce","category":{"categoryPath":"Home Page/Food/Fresh Produce/Fresh Vegetables/Celery & Cucumbers"},"departmentName":"PRODUCE","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":[{"__typename":"BaseBadge","id":"L1600","text":"Best seller","key":"BESTSELLER","type":"LABEL","query":null}],"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"2145c06f-9520-47c8-899c-7597041ec886","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T18:00:21Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$0.98 ea","value":0.98},"wasPrice":null,"unitPrice":{"displayValue":"98¢/lb","value":0.98},"linePrice":{"displayValue":"$0.98","value":0.98},"savedPrice":null,"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"26F9FBQSZH0G","name":"Whole Carrots, 16 Oz bag","usItemId":"44391515","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/5920bc6b-1db0-4af3-9f23-dddc46c0095f_1.e20c8ba41055db1ac42dfbc1e08d2fe0.jpeg"},"addOnServices":null,"itemType":null,"offerId":"A4A88FF8798F4A79A2DBEA9688634009","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":12,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:46000:46001:46104:46233","availabilityStatus":"IN_STOCK","brand":"Fresh Produce","category":{"categoryPath":"Home Page/Food/Fresh Produce/Fresh Vegetables/Root Vegetables"},"departmentName":"PRODUCE","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":[{"__typename":"BaseBadge","id":"L1600","text":"Best seller","key":"BESTSELLER","type":"LABEL","query":null}],"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"8421ff2b-e38b-4a8e-b2a9-c07e5042495d","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T17:49:57Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$9.74 ea","value":9.74},"wasPrice":null,"unitPrice":{"displayValue":"$3.25/lb","value":3.25},"linePrice":{"displayValue":"$9.74","value":9.74},"savedPrice":null,"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"2LG3I9HQHY8O","name":"Great Value Boneless Skinless Chicken Breast, 3 lb (Frozen)","usItemId":"10414680","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/fc09e695-f7e6-4e39-92b5-4ac7de5f5467.123ef1de80c2e2971dce21b910999122.jpeg"},"addOnServices":null,"itemType":null,"offerId":"B1D4DDA667E8489BAF34551B8E8D7AEC","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":12,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:46000:46001:46105:46239","availabilityStatus":"IN_STOCK","brand":"Great Value","category":{"categoryPath":"Home Page/Food/Frozen Foods/Frozen Meat, Seafood, & Vegetarian/Frozen Poultry"},"departmentName":"MEAT & SEAFOOD","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":[{"__typename":"BaseBadge","id":"L1600","text":"Best seller","key":"BESTSELLER","type":"LABEL","query":null}],"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"75fc7100-18e1-4d8d-aa73-94051be76c82","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T17:48:11Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$5.50 ea","value":5.5},"wasPrice":null,"unitPrice":{"displayValue":"21.2¢/fl oz","value":0.212},"linePrice":{"displayValue":"$5.50","value":5.5},"savedPrice":null,"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"46STBDJM6Z37","name":"Great Value: 100% Extra Virgin Olive Oil, 25.5 fl oz","usItemId":"10316039","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/2ef0ac86-0862-4a51-bceb-bbbafb8f3aaa.320f933c42a40fd2a854a1018be685be.jpeg"},"addOnServices":null,"itemType":null,"offerId":"04700307725842C2B345092E28678C35","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":12,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:42000:42003:42105:42231","availabilityStatus":"IN_STOCK","brand":"Great Value","category":{"categoryPath":"Home Page/Food/Pantry/Cooking oils & vinegar/Olive oils"},"departmentName":"GROCERY DRY GOODS","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":[{"__typename":"BaseBadge","id":"L1600","text":"Best seller","key":"BESTSELLER","type":"LABEL","query":null}],"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"74bc90ec-ebbf-44a7-b7f9-8fbee0f63725","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T17:47:38Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$1.88 ea","value":1.88},"wasPrice":null,"unitPrice":{"displayValue":"9.4¢/oz","value":0.094},"linePrice":{"displayValue":"$1.88","value":1.88},"savedPrice":null,"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"5W5NXE7F5JPH","name":"Great Value 100% Whole Wheat Round Top Bread Loaf, 20 oz","usItemId":"10804551","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/f11b5c59-f37b-45bc-bfba-6526d33b9aea.ea14bb479babb4850347ce1a135a709b.jpeg"},"addOnServices":null,"itemType":null,"offerId":"69418AF1CB4C4869BB7051F0287AFA4A","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":12,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:46000:46001:46100:46200","availabilityStatus":"IN_STOCK","brand":"Great Value","category":{"categoryPath":"Home Page/Food/Bakery & Bread/Sliced Bread/Whole Wheat Bread"},"departmentName":"COMM BREAD","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":[{"__typename":"BaseBadge","id":"L1600","text":"Best seller","key":"BESTSELLER","type":"LABEL","query":null}],"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"616a1b50-dea3-457c-b50a-ddc789c429e1","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T17:47:13Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$1.62 ea","value":1.62},"wasPrice":null,"unitPrice":{"displayValue":"5.1¢/oz","value":0.051},"linePrice":{"displayValue":"$1.62","value":1.62},"savedPrice":null,"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"775LA6JUZA02","name":"Great Value Long Grain Enriched Rice, 32 oz","usItemId":"10315394","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/a2ba820c-7fc3-4167-826f-455a7a0fb614.a514371f943865e40a997685749c57b6.jpeg"},"addOnServices":null,"itemType":null,"offerId":"A30843339DEB467BB0F8390C8253E53A","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":12,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:42000:42003:42105:42232","availabilityStatus":"IN_STOCK","brand":"Great Value","category":{"categoryPath":"Home Page/Food/Pantry/Rice, grains & dried beans/Rice"},"departmentName":"GROCERY DRY GOODS","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":[{"__typename":"BaseBadge","id":"L1600","text":"Best seller","key":"BESTSELLER","type":"LABEL","query":null}],"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"c415a3e7-5d55-4777-921a-43846569b343","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T17:46:42Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$0.78 ea","value":0.78},"wasPrice":null,"unitPrice":{"displayValue":"5.2¢/oz","value":0.052},"linePrice":{"displayValue":"$0.78","value":0.78},"savedPrice":null,"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"7HAZEV5ZDDWH","name":"Great Value Black Beans, 15 oz Can","usItemId":"10534038","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/eda74fce-1af9-45bc-8f56-05721b6abb52.111c67135274d7670ad44553d567d9d6.jpeg"},"addOnServices":null,"itemType":null,"offerId":"8EDF10427C864A41811C3F0A1A19C828","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":12,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:42000:42003:42106:42239","availabilityStatus":"IN_STOCK","brand":"Great Value","category":{"categoryPath":"Home Page/Food/Pantry/Canned goods/Canned beans"},"departmentName":"GROCERY DRY GOODS","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":[{"__typename":"BaseBadge","id":"L1600","text":"Best seller","key":"BESTSELLER","type":"LABEL","query":null}],"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"8cd4a6e1-1237-4d89-bcc7-89aab5f6ddec","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T17:46:26Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$0.50 ea","value":0.5},"wasPrice":{"displayValue":"$0.58","value":0.58},"unitPrice":{"displayValue":"3.3¢/fl oz","value":0.033},"linePrice":{"displayValue":"$0.50","value":0.5},"savedPrice":{"displayValue":"$0.08","value":0.08},"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"6WMR52MPRFC2","name":"Great Value Golden Sweet Whole Kernel Corn, 15 oz","usItemId":"10315427","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/f10b66a7-2551-4b79-9371-63a7a04251eb.3b7842999d659f6aedbcb4bddfa78233.png"},"addOnServices":null,"itemType":null,"offerId":"6DAEDDEF0EF24C5897BAA1A70891C9C4","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":48,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:42000:42003:42106:42239","availabilityStatus":"IN_STOCK","brand":"Great Value","category":{"categoryPath":"Home Page/Food/Pantry/Canned goods/Canned vegetables/Canned corn"},"departmentName":"GROCERY DRY GOODS","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":[{"__typename":"BaseBadge","id":"L1600","text":"Best seller","key":"BESTSELLER","type":"LABEL","query":null},{"__typename":"BaseBadge","id":"L1300","text":"Rollback","key":"ROLLBACK","type":"LABEL","query":null}],"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"fc955bea-32a3-4bcf-981b-1f9f7b5fdcf7","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T17:46:09Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$2.28 ea","value":2.28},"wasPrice":null,"unitPrice":{"displayValue":"7.1¢/oz","value":0.071},"linePrice":{"displayValue":"$2.28","value":2.28},"savedPrice":null,"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"5S7ZKKDHPFAR","name":"Great Value Frozen Sweet Peas, 32 oz Steamable Bag","usItemId":"712949094","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/44272457-5c93-48c8-a673-749880e5667c.1dcb35c5d672df13f83ba041c3f77239.jpeg"},"addOnServices":null,"itemType":null,"offerId":"8E147841CEA74E79ACCCD3D6469BCD15","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":12,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:46000:46001:46104:46233","availabilityStatus":"IN_STOCK","brand":"Great Value","category":{"categoryPath":"Home Page/Food/Frozen Foods/Frozen Fruits & Vegetables/Frozen Vegetables"},"departmentName":"FROZEN FOODS","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":null,"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"fea78559-91e3-4f5c-82c9-1ded3829f5e9","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T17:42:34Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$2.76 ea","value":2.76},"wasPrice":null,"unitPrice":{"displayValue":"17.3¢/oz","value":0.173},"linePrice":{"displayValue":"$2.76","value":2.76},"savedPrice":null,"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"7JLCAML35EG0","name":"Jif Creamy Peanut Butter, 16-Ounce Jar","usItemId":"777839120","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/2eab0f67-0308-46a5-bc5b-3ef79e3f8f17.03b75c30bf72f0054e05d7269be9d9ee.jpeg"},"addOnServices":null,"itemType":null,"offerId":"38C34F002C10439EB5CA32AB8C6D0757","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":55,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:42000:42003:42104:42226","availabilityStatus":"IN_STOCK","brand":"Jif","category":{"categoryPath":"Home Page/Food/Baking/Easy to Make/Holiday peanut butter blossoms"},"departmentName":"GROCERY DRY GOODS","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":null,"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"57d2a76f-ab3a-4e9b-98cb-01969da02722","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T17:41:45Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$1.84 ea","value":1.84},"wasPrice":null,"unitPrice":{"displayValue":"10.2¢/oz","value":0.102},"linePrice":{"displayValue":"$1.84","value":1.84},"savedPrice":null,"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"0SVDGLQI8K99","name":"Great Value Creamy Peanut Butter, 18 oz Jar","usItemId":"10315475","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Tomorrow","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/b1de5b13-ea36-4195-a48f-df80e9ad32d3.866d0f8269899d9c1ec4bd0a6eb0947c.jpeg"},"addOnServices":null,"itemType":null,"offerId":"22948288A08D4C82A56746FBE2FFD401","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":12,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"FC","fulfillmentSpeed":null,"fulfillmentTitle":"title_shipToHome_oneday_delivery","classType":"REGULAR","rhPath":"40000:42000:42003:42104:42226","availabilityStatus":"IN_STOCK","brand":"Great Value","category":{"categoryPath":"Home Page/Food/Pantry/Back to routines/Lunchbox favorites"},"departmentName":"GROCERY DRY GOODS","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":[{"__typename":"BaseBadge","id":"L1600","text":"Best seller","key":"BESTSELLER","type":"LABEL","query":null}],"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":true,"freeReturns":true,"returnWindow":{"value":90,"unitType":"Day"},"returnPolicyText":"Free 90-day returns"}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["AVAILABLE_SHIPPING"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"4c115420-8be3-4bd7-983a-99b7a312d772","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T17:40:54Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$0.88 ea","value":0.88},"wasPrice":null,"unitPrice":{"displayValue":"6.1¢/oz","value":0.061},"linePrice":{"displayValue":"$0.88","value":0.88},"savedPrice":null,"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"6QT246VSIIIX","name":"Great Value Diced Tomatoes in Tomato Juice, 14.5 oz Can","usItemId":"10450990","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/39e84d3f-f0dd-4c35-b004-2def423e136c.7bea3f64d881a1f87c001e140ffc4af8.jpeg"},"addOnServices":null,"itemType":null,"offerId":"16F50A6C7F3448169C63B1209F39B371","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":12,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:42000:42003:42106:42239","availabilityStatus":"IN_STOCK","brand":"Great Value","category":{"categoryPath":"Home Page/Food/Pantry/Canned goods/Canned tomatoes, sauce & puree"},"departmentName":"GROCERY DRY GOODS","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":[{"__typename":"BaseBadge","id":"L1600","text":"Best seller","key":"BESTSELLER","type":"LABEL","query":null}],"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"ed2cbb35-cdbd-42ef-ac32-f396086a235e","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T17:40:47Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":"avg","finalCostByWeight":true},"itemPrice":{"displayValue":"$0.29 ea","value":0.29},"wasPrice":{"displayValue":"$0.44","value":0.44},"unitPrice":{"displayValue":"98¢/lb","value":0.98},"linePrice":{"displayValue":"$0.29","value":0.29},"savedPrice":{"displayValue":"$0.15","value":0.15},"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"6M305QWQZ7EQ","name":"Fresh Roma Tomato, Each","usItemId":"44390944","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/1816695f-3a84-418d-96c1-86521eca7d38_2.48b201b3f23d17a6d8c5bb80b28020d1.jpeg"},"addOnServices":null,"itemType":null,"offerId":"B515E225E75F403BB2103FF5D1838092","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":25,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH_WEIGHT","salesUnitType":"EACH_WEIGHT","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:46000:46001:46104:46233","availabilityStatus":"IN_STOCK","brand":"Fresh Produce","category":{"categoryPath":"Home Page/Food/Fresh Produce/Fresh Vegetables/Tomatoes"},"departmentName":"PRODUCE","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":[{"__typename":"BaseBadge","id":"L1600","text":"Best seller","key":"BESTSELLER","type":"LABEL","query":null},{"__typename":"BaseBadge","id":"L1300","text":"Rollback","key":"ROLLBACK","type":"LABEL","query":null}],"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"a5db9b02-6ef2-4c28-bff3-54748f829303","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T17:40:32Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$0.88 ea","value":0.88},"wasPrice":null,"unitPrice":{"displayValue":"88¢/ea","value":0.88},"linePrice":{"displayValue":"$0.88","value":0.88},"savedPrice":null,"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"3EKVW7QC74SM","name":"Navel Oranges","usItemId":"162577028","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/e3047114-663b-4d6f-99e3-f39a1783cc85_1.dd4e87c150c5f739fc07655139fcbf66.jpeg"},"addOnServices":null,"itemType":null,"offerId":"508D671A070B4235A40FA262453AAB26","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":25,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:46000:46001:46104:46233","availabilityStatus":"IN_STOCK","brand":"Fresh Produce","category":{"categoryPath":"Home Page/Food/Fresh Produce/Fresh Fruits/Citrus/All citrus"},"departmentName":"PRODUCE","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":[{"__typename":"BaseBadge","id":"L1600","text":"Best seller","key":"BESTSELLER","type":"LABEL","query":null}],"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"3dba88c2-bd63-4352-8cbf-f3db65928f88","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T17:40:06Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$5.98 ea","value":5.98},"wasPrice":null,"unitPrice":{"displayValue":"$1.99/lb","value":1.99},"linePrice":{"displayValue":"$5.98","value":5.98},"savedPrice":null,"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"6669Y3CX8L7R","name":"Freshness Guaranteed Granny Smith Apples, 3 lb Bag","usItemId":"44390991","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/7851ccc3-7c26-4437-846a-b677ec2650a6.013da5c0c4d55cfa68c4a54b760d0d4d.jpeg"},"addOnServices":null,"itemType":null,"offerId":"00ED8EC57CB24E4FA93B8C047905455D","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":12,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:42000:42002:42103:42223","availabilityStatus":"IN_STOCK","brand":"Freshness Guaranteed","category":{"categoryPath":"Home Page/Food/Fresh Produce/Fresh Fruits/Apples & Pears"},"departmentName":"PRODUCE","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":null,"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"938a7c2e-5454-4e01-b067-59b238d9f399","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T17:37:37Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$6.72 ea","value":6.72},"wasPrice":null,"unitPrice":{"displayValue":"$6.72/lb","value":6.72},"linePrice":{"displayValue":"$6.72","value":6.72},"savedPrice":null,"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"6OSPLKFJLDWK","name":"Great Value Thin Sliced Oven Roasted Turkey Breast Family Pack, 8 oz, 2 Ct","usItemId":"47394316","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/2e5061f6-e022-42f7-bdf8-9f522ac646f1_1.73f0957026f8730bbc0dcd790b127112.jpeg"},"addOnServices":null,"itemType":null,"offerId":"C78075008B714A60ABA3C09ADAE05A06","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":12,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:46000:46001:46102:46222","availabilityStatus":"IN_STOCK","brand":"Great Value","category":{"categoryPath":"Home Page/Food/Deli/Deli Meat & Cheese/Lunch meat"},"departmentName":"PRE PACKED DELI","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":null,"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"5c3866f6-94dc-4066-871d-99890c139aa9","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T17:36:46Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$3.68 ea","value":3.68},"wasPrice":null,"unitPrice":{"displayValue":"23¢/oz","value":0.23},"linePrice":{"displayValue":"$3.68","value":3.68},"savedPrice":null,"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"2GZZ5UTF9LUB","name":"Great Value Sharp Cheddar Cheese, 16 oz","usItemId":"10452385","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/1d30bb5f-11e0-439d-98b0-a43dccc9a8f5.bc418dff1da1d23cd5db80a5186cf6ce.jpeg"},"addOnServices":null,"itemType":null,"offerId":"A1575E76B9CF477F970138A1DA27436B","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":12,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:42000:42003:42106:42242","availabilityStatus":"IN_STOCK","brand":"Great Value","category":{"categoryPath":"Home Page/Food/Dairy & Eggs/Cheese/All Cheese"},"departmentName":"DAIRY","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":[{"__typename":"BaseBadge","id":"L1600","text":"Best seller","key":"BESTSELLER","type":"LABEL","query":null}],"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"dd8211c3-10e5-44bd-a5dc-16a60f15c7ba","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T17:35:35Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$3.37 ea","value":3.37},"wasPrice":null,"unitPrice":{"displayValue":"18.7¢/ea","value":0.187},"linePrice":{"displayValue":"$3.37","value":3.37},"savedPrice":null,"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"3AYTM93DT2TK","name":"Great Value Large White Eggs, 18 Count","usItemId":"172844767","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/df2ea507-1953-4cb9-97b6-a1bc10f3dd19_1.bc951a020f826ffe87cf466c3fc1c130.jpeg"},"addOnServices":null,"itemType":null,"offerId":"B5F11C1D43E341A39D4AD36DAFE80526","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":12,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:46000:46001:46101:46210","availabilityStatus":"IN_STOCK","brand":"Great Value","category":{"categoryPath":"Home Page/Food/Dairy & Eggs/Eggs/Traditional Eggs"},"departmentName":"DAIRY","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":[{"__typename":"BaseBadge","id":"L1600","text":"Best seller","key":"BESTSELLER","type":"LABEL","query":null}],"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null},{"id":"d870467c-0310-447f-98b7-8fbf549973d7","quantity":1,"quantityString":"1","quantityLabel":"Qty","orderedSalesUnit":null,"hasShippingRestriction":null,"isPreOrder":null,"isGiftEligible":false,"isSubstitutionSelected":null,"displayAddOnServices":true,"createdDateTime":"2023-01-16T17:34:24Z","discounts":null,"isWplusEarlyAccess":null,"isEventActive":false,"eventType":null,"selectedAddOnServices":[],"bundleComponents":[],"registryId":null,"fulfillmentPreference":null,"selectedVariants":null,"priceInfo":{"priceDisplayCodes":{"showItemPrice":false,"priceDisplayCondition":null,"finalCostByWeight":false},"itemPrice":{"displayValue":"$2.78 ea","value":2.78},"wasPrice":null,"unitPrice":{"displayValue":"2.2¢/fl oz","value":0.022},"linePrice":{"displayValue":"$2.78","value":2.78},"savedPrice":null,"tierPrice":null,"priceChange":null},"promotions":null,"product":{"id":"3H34WSS08ANB","name":"Great Value Whole Vitamin D Milk, Gallon, 128 fl oz","usItemId":"10450114","isSubstitutionEligible":true,"personalizable":false,"sponsoredProduct":null,"sellerDisplayName":"Walmart.com","fulfillmentBadge":"Today","variants":null,"seller":null,"imageInfo":{"thumbnailUrl":"https://i5.walmartimages.com/asr/83f533c3-3234-4bea-80bf-a0f9a43cd279_2.9b223f40bab27c513ba64f9f0e3fc2d9.jpeg"},"addOnServices":null,"itemType":null,"offerId":"E262E6B27BDE4ABA86CA2C1DF82ADEF4","sellerId":"F55CDC31AB754BB68FE0B39041159D63","sellerName":"Walmart.com","hasSellerBadge":null,"orderLimit":12,"orderMinLimit":1,"weightUnit":null,"weightIncrement":1,"salesUnit":"EACH","salesUnitType":"EACH","sellerType":"INTERNAL","isAlcohol":false,"fulfillmentType":"STORE","fulfillmentSpeed":null,"fulfillmentTitle":"title_store_delivery_curbside_pickup","classType":"REGULAR","rhPath":"40000:46000:46001:46101:46211","availabilityStatus":"IN_STOCK","brand":"Great Value","category":{"categoryPath":"Home Page/Food/Dairy & Eggs/Milk/Dairy Milk/Whole Milk"},"departmentName":"DAIRY","configuration":null,"snapEligible":false,"preOrder":{"isPreOrder":false},"badges":{"flags":[{"__typename":"BaseBadge","id":"L1600","text":"Best seller","key":"BESTSELLER","type":"LABEL","query":null}],"labels":null,"tags":[]},"shopSimilar":null,"returnPolicy":{"returnable":null,"freeReturns":null,"returnWindow":{"value":null,"unitType":"Day"},"returnPolicyText":null}},"registryInfo":null,"personalizedItemDetails":null,"wirelessPlan":null,"fulfillmentSourcingDetails":{"currentSelection":"PICKUP","requestedSelection":null,"fulfillmentBadge":["PICKUP_DELIVERY_ONLY"]},"availableQty":null,"expiresAt":null,"showExpirationTimer":false,"isPetRxItem":null}],"priceChange":null,"fulfillment":{"isExplicitIntent":false,"intent":"PICKUP","assortmentIntent":"PICKUP","deliveryStore":{"isExpressDeliveryOnly":false,"storeFeeTier":null,"storeId":"3453","timezone":"US/Eastern"},"isDefaultStore":false,"pickupStore":{"storeId":"3453","addressLineOne":"355 54th Street Sw","city":"Wyoming","stateCode":null,"countryCode":"US","postalCode":"49548","storeFeeTier":null},"accessPoint":{"id":"d59fe227-9bc9-42aa-af4f-da038f998ddc","assortmentStoreId":"3453","name":"Walmart Wyoming Store #3453","nodeAccessType":"PICKUP_CURBSIDE","isExpressEligible":null,"accessType":"PICKUP_CURBSIDE","fulfillmentType":"INSTORE_PICKUP","fulfillmentOption":"PICKUP","marketType":null,"displayName":"Wyoming Supercenter","timeZone":"America/New_York","bagFeeValue":null,"isActive":false,"address":{"addressLineOne":"355 54th Street Sw","addressLineTwo":null,"city":"Wyoming","postalCode":"49548","state":"MI","phone":null}},"reservation":null,"storeId":3453,"displayStoreSnackBarMessage":false,"homepageBookslotDetails":{"title":"Reserve pickup or delivery","subTitle":"","expiryText":null,"expiryTime":null,"slotExpiryText":null,"bannerType":null,"fulfillmentOption":null,"weeklyReservationFulfillmentDetails":null},"deliveryAddress":{"addressLineOne":null,"addressLineTwo":null,"city":"Grand Rapids","state":"MI","postalCode":"49548","firstName":null,"lastName":null,"id":null,"phone":null},"fulfillmentItemGroups":[{"__typename":"SCGroup","groupId":"SCGroup","defaultMode":"EXPANDED","collapsedItemIds":["682a78df-2bd3-4d69-8b97-eb97607e5efb","1a4971c1-9e6e-4d28-b2c1-6ba129f9ee7a","2145c06f-9520-47c8-899c-7597041ec886","8421ff2b-e38b-4a8e-b2a9-c07e5042495d","75fc7100-18e1-4d8d-aa73-94051be76c82","74bc90ec-ebbf-44a7-b7f9-8fbee0f63725","616a1b50-dea3-457c-b50a-ddc789c429e1","c415a3e7-5d55-4777-921a-43846569b343","8cd4a6e1-1237-4d89-bcc7-89aab5f6ddec","fc955bea-32a3-4bcf-981b-1f9f7b5fdcf7","fea78559-91e3-4f5c-82c9-1ded3829f5e9","57d2a76f-ab3a-4e9b-98cb-01969da02722","4c115420-8be3-4bd7-983a-99b7a312d772","ed2cbb35-cdbd-42ef-ac32-f396086a235e","a5db9b02-6ef2-4c28-bff3-54748f829303","3dba88c2-bd63-4352-8cbf-f3db65928f88","938a7c2e-5454-4e01-b067-59b238d9f399","5c3866f6-94dc-4066-871d-99890c139aa9","dd8211c3-10e5-44bd-a5dc-16a60f15c7ba","d870467c-0310-447f-98b7-8fbf549973d7"],"checkoutable":false,"checkoutableErrors":[{"code":"RESERVATION_REQUIRED","shouldDisableCheckout":false,"itemIds":[],"upstreamErrors":[]}],"priceDetails":{"subTotal":{"label":"Subtotal (20 items)","displayValue":"$66.02","value":66.02,"key":null,"strikeOutDisplayValue":null,"strikeOutValue":null,"program":null}},"fulfillmentSwitchInfo":null,"itemGroups":[{"__typename":"ItemGroup","label":"Bakery & Bread","itemIds":["74bc90ec-ebbf-44a7-b7f9-8fbee0f63725"],"accessPoint":null},{"__typename":"ItemGroup","label":"Baking","itemIds":["fea78559-91e3-4f5c-82c9-1ded3829f5e9"],"accessPoint":null},{"__typename":"ItemGroup","label":"Dairy & Eggs","itemIds":["5c3866f6-94dc-4066-871d-99890c139aa9","dd8211c3-10e5-44bd-a5dc-16a60f15c7ba","d870467c-0310-447f-98b7-8fbf549973d7"],"accessPoint":null},{"__typename":"ItemGroup","label":"Deli","itemIds":["938a7c2e-5454-4e01-b067-59b238d9f399"],"accessPoint":null},{"__typename":"ItemGroup","label":"Fresh Produce","itemIds":["1a4971c1-9e6e-4d28-b2c1-6ba129f9ee7a","2145c06f-9520-47c8-899c-7597041ec886","ed2cbb35-cdbd-42ef-ac32-f396086a235e","a5db9b02-6ef2-4c28-bff3-54748f829303","3dba88c2-bd63-4352-8cbf-f3db65928f88"],"accessPoint":null},{"__typename":"ItemGroup","label":"Frozen Foods","itemIds":["682a78df-2bd3-4d69-8b97-eb97607e5efb","8421ff2b-e38b-4a8e-b2a9-c07e5042495d","fc955bea-32a3-4bcf-981b-1f9f7b5fdcf7"],"accessPoint":null},{"__typename":"ItemGroup","label":"Pantry","itemIds":["75fc7100-18e1-4d8d-aa73-94051be76c82","616a1b50-dea3-457c-b50a-ddc789c429e1","c415a3e7-5d55-4777-921a-43846569b343","8cd4a6e1-1237-4d89-bcc7-89aab5f6ddec","57d2a76f-ab3a-4e9b-98cb-01969da02722","4c115420-8be3-4bd7-983a-99b7a312d772"],"accessPoint":null}],"accessPoint":{"id":"d59fe227-9bc9-42aa-af4f-da038f998ddc","assortmentStoreId":"3453","name":"Walmart Wyoming Store #3453","nodeAccessType":"PICKUP_CURBSIDE","isExpressEligible":null,"accessType":"PICKUP_CURBSIDE","fulfillmentType":"INSTORE_PICKUP","fulfillmentOption":"PICKUP","marketType":null,"displayName":"Wyoming Supercenter","timeZone":"America/New_York","bagFeeValue":null,"isActive":false,"address":{"addressLineOne":"355 54th Street Sw","addressLineTwo":null,"city":"Wyoming","postalCode":"49548","state":"MI","phone":null}},"reservation":null,"noReservationSubTitle":null,"hasFulfillmentCharges":true}],"suggestedSlotAvailability":{"isPickupAvailable":true,"isDeliveryAvailable":true,"nextPickupSlot":{"startTime":"2023-03-06T20:00:00-05:00","endTime":"2023-03-06T21:00:00-05:00","slaInMins":null},"nextDeliverySlot":null,"nextUnscheduledPickupSlot":null,"nextSlot":{"__typename":"RegularSlot","fulfillmentOption":"PICKUP","fulfillmentType":"INSTORE_PICKUP","startTime":"2023-03-06T20:00:00-05:00"}}},"priceDetails":{"subTotal":{"label":"Subtotal (20 items)","displayValue":"$66.02","value":66.02,"key":null,"strikeOutDisplayValue":null,"strikeOutValue":null,"program":null},"installationCharges":null,"fees":[],"taxTotal":{"label":"Taxes","displayValue":"Calculated at checkout","value":null,"key":null,"strikeOutDisplayValue":null,"strikeOutValue":null,"program":null},"grandTotal":{"label":"Estimated total","displayValue":"$66.02","value":66.02,"key":null,"strikeOutDisplayValue":null,"strikeOutValue":null,"program":null},"belowMinimumFee":null,"savedPriceSubTotal":{"label":"Savings","displayValue":"$0.23","value":0.23,"key":null,"strikeOutDisplayValue":null,"strikeOutValue":null,"program":null},"originalSubTotal":{"label":"Subtotal (20 items)","displayValue":"$66.25","value":66.25,"key":null,"strikeOutDisplayValue":null,"strikeOutValue":null,"program":null},"minimumThreshold":{"value":0,"displayValue":"$0"},"ebtSnapMaxEligible":null,"balanceToMinimumThreshold":{"value":0,"displayValue":"$0.00","label":"Add 0 to remove the $0 below minimum fee"},"totalItemQuantity":20,"rewards":null,"discounts":null},"affirm":null,"toastWarning":[],"checkoutableErrors":[{"code":"RESERVATION_REQUIRED","shouldDisableCheckout":false,"itemIds":[],"upstreamErrors":[]}],"checkoutableWarnings":[],"operationalErrors":[],"cartCustomerContext":{"isMembershipOptedIn":false,"isEligibleForFreeTrial":true,"membershipData":{"isActiveMember":false,"isPaidMember":null,"benefitCodes":null},"paymentData":{"hasCreditCard":false,"hasCapOne":false,"hasDSCard":false,"hasEBT":false,"isCapOneLinked":false,"showCapOneBanner":true,"wplusNoBenefitBanner":true}}}}}'''
 
-    # create clean list variables from raw_items
-    names = get_item_names(raw_items)
-    prices = get_items_prices(raw_items)
-    stock = get_stock_availability(raw_items)
+    test1 =Parse_and_save(request_string,location)
+    test1.run_parse_machine()
 
-    # create dictionary variables from the above list variables of names:prices and names:stock
-    name_stock = dict(zip(names, stock))
-    name_price = dict(zip(names, prices))
-
-    #gets total number of items in stock, or with errors for logging/reporting
-    print(get_num_items_from_stock_dict(name_stock))
-
-    #Puts the price dict in the correct order for the DF, adds the date and then appends it to the DF in CSV format.
-    in_order_prices = ordered_food_price_dict(name_price)
-    ordered_and_dated_prices = add_date_to_dic(in_order_prices, today_date)
-    print(ordered_and_dated_prices)
-    create_or_append_csv_df(current_zip_code, ordered_and_dated_prices, today_date)
-
-    in_order_stock = ordered_name_stock_dict(name_stock)
-    ordered_and_dated_stock = add_date_to_dic(in_order_stock, today_date)
-    # print(ordered_and_dated_stock)
-    create_or_append_csv_df_stock(current_zip_code, ordered_and_dated_stock, today_date)
-
-    #create_or_append_csv_df(current_zip_code,xx,today_date))

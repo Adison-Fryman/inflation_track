@@ -2,6 +2,7 @@ import item_price_parse as parse
 from locations import locations_dict
 import datetime
 
+
 greeting = '''Hello, are you logged in to the walmart site...
         https://www.walmart.com/cart 
 
