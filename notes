@@ -1,11 +1,11 @@
 # today's plan todo list
-# 1.add location to DF's and I need an ID for when in SQL...thinking location+date+s/p (s/p for stock/price)
-# 2.
-# 3. get started on logging
+# 1.merge new class/ logging branch before starting a testing branch
+# 2.add location to DF's and I need an ID for when in SQL...thinking location+date+s/p (s/p for stock/price)
+# 3. unit test done
 # 4. find a way to use from CMD?
 
 #todo list -This WEEK
-# 1.Branch- classes
+# 1.
 # 2.pandas tutorial
 # 4.
 # 3. automation
@@ -38,4 +38,5 @@
 # 3. add gallon of gas in each area?
 # 4. does bulk buying save money over time when items are on sale?
 # 5.
+
 
