@@ -1,15 +1,15 @@
 # today's plan todo list
-# 1.merge new class/ logging branch before starting a testing branch
+# 1.
 # 2.add location to DF's and I need an ID for when in SQL...thinking location+date+s/p (s/p for stock/price)
 # 3. unit test done
 # 4. find a way to use from CMD?
 
 #todo list -This WEEK
 # 1.
-# 2.pandas tutorial
+# 2.
 # 4.
 # 3. automation
-# 5.how to branch and merge
+# 5.
 # 6.get into SQL
 # 7.discover best format for data analysis with numpy, pandas and jupiter notebooks
 
@@ -26,7 +26,7 @@
 
 #todo list smaller items
 # 1. automate an email update sent with logging, and general data acquisition notes
-# 2. clean up functions with some comprehensions.
+# 2. clean up functions with some comprehensions?
 # 3.add try/expt blocks for areas errors may be thrown: get_num_items. part of logging
 # 4.
 # 5.
