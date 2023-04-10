@@ -34,10 +34,10 @@ class Parse_and_save:
         self.ordered_and_dated_stock = {}
         logging.info(f'created new class for location :{self.location}')
 
-    # entry point of request string, creates the text file, then closes it. This is the "test" version to prevent over writing data in DF's.
+    # entry point of request string, creates the text file, then closes it.
     #need try exept block here to catch when there is no file and allow a way to start the loop iteration over
     def create_txt_files(self):
-        # update this so that it does not overwrite files that already exist.?
+        # update this so that it does not overwrite files that already exist?
         request_string = input(fr"When ready put the network request for {self.location} here as a string :")
         txt_file_path =fr'''C:\dev\inflation_track\walmart_cart_date.location.price\{today_date}.{self.location}.txt'''
         if os.path.exists(txt_file_path):
@@ -186,8 +186,8 @@ class Parse_and_save:
         return f'Total:{total}   Number of In Stock Items: {yeses}  Number Out of Stock: {nos}  Errors: {errors}'
 
 
-    # put the names and prices
-    def ordered_food_price_dict(self):
+    # put the names and prices in correct order for DF
+    def ordered_food_price_dict(self, manual=None):
         final_data_sorted_named_clean = {}
         invalid_descriptions = 0
         for food_item, description in food_list.items():
@@ -203,16 +203,20 @@ class Parse_and_save:
             elif food_item_key_word in str(self.name_price).lower():
                 res = [name for name, price in self.name_price.items() if food_item_key_word in name.lower()]
                 final_data_sorted_named_clean[food_item] = self.name_price[res[0]]
-                ###enter log here (description for {food_item} in list of items is not valid today)
+                logging.warning(f"description for {food_item} in list of items is not valid today")
                 invalid_descriptions += 1
             # if neither of those works user is alerted (in future will ask user to enter price manually)
             else:
-                final_data_sorted_named_clean[food_item] = 'item not found'
+                #final_data_sorted_named_clean[food_item] = 'item not found'
                 print('not found:' + food_item)
-                ###enter log here ('not found:' + {food_item})
+                logging.warning(f'price not found: + {food_item}')
+                manual_entry = input("If item is showing, enter price manually here (Format: ##.##) If not just type NA")
+                final_data_sorted_named_clean[food_item] = manual_entry
                 invalid_descriptions += 1
 
-        ####enter log here(f' the number of invalid descriptions in list_of_items is: {invalid_descriptions}
+        if invalid_descriptions>2:
+            logging.warning(f' the number of invalid descriptions in list_of_items is: {invalid_descriptions}')
+
         return final_data_sorted_named_clean
 
 
@@ -231,12 +235,12 @@ class Parse_and_save:
             elif food_item_key_word in str(self.name_stock).lower():
                 res = [name for name, status in self.name_stock.items() if food_item_key_word in name.lower()]
                 final_data_sorted_named_clean[food_item] = self.name_stock[res[0]]
-                ###enter log here (description for {food_item} in list of items is not valid today)
-                # if neither of those works user is alerted (in future will ask user to enter price manually?)
             else:
-                final_data_sorted_named_clean[food_item] = 'item not found'
+                #final_data_sorted_named_clean[food_item] = 'item not found'
                 print('not found:' + food_item)
-                ###enter log here ('not found:' + {food_item})
+                logging.warning(f'stock not found: + {food_item}')
+                manual_entry = input("If item is showing, enter stck status manually here (Format:YES/NO) If not just type NA")
+                final_data_sorted_named_clean[food_item] = manual_entry
         return final_data_sorted_named_clean
 
 

@@ -1,16 +1,16 @@
 # today's plan todo list
-# 1.
-# 2.add location to DF's and I need an ID for when in SQL...thinking location+date+s/p (s/p for stock/price)
-# 3. unit test done
-# 4. find a way to use from CMD?
+# 1.add location to DF's and I need an ID for when in SQL...thinking location+date+s/p (s/p for stock/price?)
+# 2. look at unittest, it needs a mock or I cant go forward.
+# 3.
+# 4.
 
 #todo list -This WEEK
-# 1.
-# 2.
+# 1.get into SQL
+# 2. automation email for logging report?
 # 4.
-# 3. automation
+# 3.
 # 5.
-# 6.get into SQL
+# 6.
 # 7.discover best format for data analysis with numpy, pandas and jupiter notebooks
 
 #todo list large items
@@ -28,12 +28,12 @@
 # 1. automate an email update sent with logging, and general data acquisition notes
 # 2. clean up functions with some comprehensions?
 # 3.add try/expt blocks for areas errors may be thrown: get_num_items. part of logging
-# 4.
+# 4. make sure everything is lowercase? so far it is not an issue, but it maybe later.
 # 5.
 # 6.
 
 #todo list general ideas for more impact
-# 1.
+# 1.make a GUI?
 # 2. find more data on food to add in, FDA?, USDA?, consumer price index?
 # 3. add gallon of gas in each area?
 # 4. does bulk buying save money over time when items are on sale?
