@@ -19,7 +19,7 @@ locations_dict = { '49548': "355 54th St SW, Wyoming, MI 49548",
 # ________instructions to collect data manually _______
 #
 # change zip, enter cart, inspect page, click network in (), refresh page,
-# sort by type, scroll to "fetch" current name starts with eb54d8(dee44), size should be about 12.8 kb, click on the name,
+# sort by type, scroll to "fetch" current name starts with eb54d8(dee44) changes daily, size should be about 12.8+ kb, click on the name,
 # dictionary should start with : ({"data":{"cart":{"id":"),
 # hit ctrl +shift+end, then copy.
 # saving as date.zip in dev>project folder as .txt file

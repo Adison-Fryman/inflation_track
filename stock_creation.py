@@ -1,6 +1,6 @@
 # file is for creating the stock availability DF from the already made txt files in directory.
-#The 6 weeks worth of data is now in DF's .
-# I plan to just adjust main.py to include this step for next week.
+
+
 import os
 import item_price_parse as parse
 from locations import locations_dict
