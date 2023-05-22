@@ -206,7 +206,7 @@ class Parse_and_save:
                 final_data_sorted_named_clean[food_item] = self.name_price[res[0]]
                 logging.warning(f"description for {food_item} in list of items is not valid today")
                 invalid_descriptions += 1
-            # if neither of those works user is alerted (in future will ask user to enter price manually)
+            # if neither of those works user is alerted asks user to enter price manually
             else:
                 #final_data_sorted_named_clean[food_item] = 'item not found'
                 print('not found:' + food_item)
@@ -221,6 +221,7 @@ class Parse_and_save:
         return final_data_sorted_named_clean
 
 
+    # put the names and stock status in correct order for DF
     def ordered_name_stock_dict(self):
         final_data_sorted_named_clean = {}
         for food_item, description in food_list.items():
@@ -254,12 +255,15 @@ class Parse_and_save:
     def create_or_append_csv_df(self, date_added: dict):
         df = pd.DataFrame(date_added, index=[0])
         data_in_directory = fr'''C:\dev\inflation_track\walmart_cart_date.location.price\grouped\{self.location}.csv'''
+        #puts new data in exsiting data frame
         if os.path.exists(data_in_directory):
             print(f" {self.location} prices have been updated, with prices from today's date: {today_date}")
             print(f'File saved to: {data_in_directory}')
             logging.info(f"{self.location} prices have been updated, with prices from today's date: {today_date}, File saved to: {data_in_directory}")
+            #appending 'df' to bottom of csv file, with no header and including an index.
             df.to_csv(data_in_directory, mode='a', index=1, header=False)
             pass
+        #if no data frame was found, new data frame is created
         else:
             df.to_csv(data_in_directory)
             logging.warning(f'new dataframe created with location:{data_in_directory}')
