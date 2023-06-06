@@ -214,7 +214,7 @@ class Parse_and_save:
                 manual_entry = input("If item is showing, enter price manually here (Format: ##.##) If not just type NA")
                 final_data_sorted_named_clean[food_item] = manual_entry
                 invalid_descriptions += 1
-
+        # add the 'Type' here to dict
         if invalid_descriptions>2:
             logging.warning(f' the number of invalid descriptions in list_of_items is: {invalid_descriptions}')
 
@@ -243,13 +243,21 @@ class Parse_and_save:
                 logging.warning(f'stock not found: + {food_item}')
                 manual_entry = input("If item is showing, enter stck status manually here (Format:YES/NO) If not just type NA")
                 final_data_sorted_named_clean[food_item] = manual_entry
+        # add the 'Type' here to dict
         return final_data_sorted_named_clean
 
 
-    def add_date_to_dic(self,a_dict: dict):
-        add_date: dict[str, str] = {'date': today_date}
-        add_date.update(a_dict)
-        return add_date
+    #def add_date_to_dic(self,a_dict: dict):
+     #   add_date: dict[str, str] = {'date': today_date}
+     #   add_date.update(a_dict)
+     #   return add_date
+
+    def add_date_loc_type_id_to_dic(self, a_dict: dict, type =str):
+        id = f'{today_date}{self.location}'
+        add_metadata: dict[str,str] = {'date': today_date, 'Location': self.location,'Type': type,'ID': id}
+        add_metadata.update(a_dict)
+        return add_metadata
+
 
 
     def create_or_append_csv_df(self, date_added: dict):
@@ -312,11 +320,11 @@ class Parse_and_save:
 
         # Puts the price/stock dict in the correct order for the DF, adds the date
         in_order_prices = self.ordered_food_price_dict()
-        self.ordered_and_dated_prices = self.add_date_to_dic(in_order_prices)
+        self.ordered_and_dated_prices = self.add_date_loc_type_id_to_dic(in_order_prices,'PRICE')
         #print(ordered_and_dated_prices)
 
         in_order_stock = self.ordered_name_stock_dict()
-        self.ordered_and_dated_stock = self.add_date_to_dic(in_order_stock)
+        self.ordered_and_dated_stock = self.add_date_loc_type_id_to_dic(in_order_stock,'STOCK')
         #print(ordered_and_dated_stock)
 
      # creates DF or appends data to the DF in CSV format.
